@@ -1,0 +1,28 @@
+{
+  "name": "redux-acb",
+  "version": "1.3.3",
+  "description": "Action Creator Binder (Service/Helper for Redux Infrastructure)",
+  "main": "index.js",
+  "scripts": {
+    "build": "babel src -d lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://archik@bitbucket.org/archik/redux-acb.git"
+  },
+  "keywords": [
+    "react",
+    "redux",
+    "actions",
+    "action-creators",
+    "bound-action-creators",
+    "binder"
+  ],
+  "author": "artur.basak@instinctools.ru",
+  "license": "MIT",
+  "homepage": "https://bitbucket.org/archik/redux-acb#readme",
+  "devDependencies": {
+    "babel-cli": "6.24.0",
+    "babel-preset-env": "1.2.2"
+  }
+}
