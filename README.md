@@ -1,4 +1,5 @@
 ## Action Creator Binder (Service/Helper for Redux Infrastructure)
+[![npm version](https://img.shields.io/npm/v/redux-acb.svg?style=flat-square)](https://www.npmjs.com/package/redux-acb)
 
 ### Image:
 

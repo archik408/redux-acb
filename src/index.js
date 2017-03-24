@@ -15,17 +15,20 @@ const SUCCESS_POSTFIX = '_SUCCESS';
 const FAIL_POSTFIX = '_FAIL';
 
 /**
- * Create pure redux action
+ * Create pure redux/flux action
  *
+ * @see https://github.com/acdlite/redux-actions
  * @see https://github.com/acdlite/flux-standard-action#actions
  *
  * @param {String} type - Action type
  * @param {*} [payload] - Some data or error details
  * @param {*} [meta] - Addition action information
- * @returns {{type: *, payload: *, meta: *}}
+ * @param {Boolean} [error] - Payload is error
+ *
+ * @returns {Object} New action object
  */
-export function createAction(type, payload, meta) {
-    return { type, payload, meta };
+export function createAction(type, payload, meta, error) {
+    return { type, payload, meta, error };
 }
 
 /**
@@ -35,7 +38,8 @@ export function createAction(type, payload, meta) {
  * @param {*} [payload] - Some data or error details
  * @param {*} [meta] - Addition action information
  *
- * @returns {function(dispatch, getState)} Binder
+ * @returns {Function} Binder
+ * @param {Function} Binder.dispatch - Action emitter
  */
 export function boundAction(type, payload, meta) {
     return dispatch => dispatch(createAction(type, payload, meta));
@@ -44,12 +48,14 @@ export function boundAction(type, payload, meta) {
 /**
  * Bound action that has type Promise
  *
- * @param {function(): Promise} operation - Function/Operation that return Promise
+ * @param {Promise} operation - Function/Operation that return Promise
  * @param {String} type - Action type
- * @param {function()} isLoading - Getter for pending indicator
+ * @param {Function} isLoading - Getter for pending indicator
  * @param {Array<*>} [args] - Operation arguments
  *
- * @returns {function(dispatch, getState)} Binder
+ * @returns {Function} Binder
+ * @param {Function} Binder.dispatch - Action emitter
+ * @param {Function} Binder.getState - Getter for application global state
  */
 export function boundPromise(operation, type, isLoading, args=[]) {
     return (dispatch, getState) => {
@@ -58,7 +64,7 @@ export function boundPromise(operation, type, isLoading, args=[]) {
 
             operation(...args)
                 .then(response => dispatch(createAction(`${type}${SUCCESS_POSTFIX}`, response.data, args)))
-                .catch(error => dispatch(createAction(`${type}${FAIL_POSTFIX}`, error, args)));
+                .catch(error => dispatch(createAction(`${type}${FAIL_POSTFIX}`, error, args, true)));
         }
     }
 }
@@ -66,13 +72,14 @@ export function boundPromise(operation, type, isLoading, args=[]) {
 /**
  * Bound async action
  *
- * @param {function(*, function()} operation - Async function/operation
- *  that has first-error callback
+ * @param {Function} operation - Async function/operation that has first-error callback
  * @param {String} type - Action type
- * @param {function()} isLoading - Getter for pending indicator
+ * @param {Function} isLoading - Getter for pending indicator
  * @param {Array<*>} [args] - Operation arguments
  *
- * @returns {function(dispatch, getState)} Binder
+ * @returns {Function} Binder
+ * @param {Function} Binder.dispatch - Action emitter
+ * @param {Function} Binder.getState - Getter for application global state
  */
 export function boundAsync(operation, type, isLoading, args=[]) {
     return (dispatch, getState) => {
@@ -81,7 +88,7 @@ export function boundAsync(operation, type, isLoading, args=[]) {
 
             operation(...args, (error , data) => {
                 if (error) {
-                    return dispatch(createAction(`${type}${FAIL_POSTFIX}`, error, args));
+                    return dispatch(createAction(`${type}${FAIL_POSTFIX}`, error, args, true));
                 }
                 dispatch(createAction(`${type}${SUCCESS_POSTFIX}`, data, args));
             });
