@@ -1,4 +1,14 @@
 /**
+ * @todo artur.basak
+ * Все еще считаю, что подобный сервис
+ * это попытка обойти тот факт, что слой модели на клиенте
+ * является персистентным.
+ * Персистентность нужно реализовывать на уровне модели,
+ * действия пользователя не должны в процессе работы мутировать
+ * во что-то вроде GET_DATA_FAIL
+ */
+
+/**
  * @private
  * @type {String}
  */
@@ -15,82 +25,103 @@ const SUCCESS_POSTFIX = '_SUCCESS';
 const FAIL_POSTFIX = '_FAIL';
 
 /**
- * Create pure redux/flux action
+ * Fabric method
+ * Creating application dispatcher
  *
- * @see https://github.com/acdlite/redux-actions
- * @see https://github.com/acdlite/flux-standard-action#actions
- *
- * @param {String} type - Action type
- * @param {*} [payload] - Some data or error details
- * @param {*} [meta] - Addition action information
- * @param {Boolean} [error] - Payload is error
- *
- * @returns {Object} New action object
+ * @param {Object} strategy - Strategy for working with Store/Models
+ * @returns {Dispatcher} as part of Controller
  */
-export function createAction(type, payload, meta, error) {
-    return { type, payload, meta, error };
+export function buildDispather(strategy) {
+    return new Dispatcher(strategy);
 }
 
 /**
- * Bound pure action
- *
- * @param {String} type - Action type
- * @param {*} [payload] - Some data or error details
- * @param {*} [meta] - Addition action information
- *
- * @returns {Function} Binder
- * @param {Function} Binder.dispatch - Action emitter
+ * Action Dispatcher
+ * as a part of Controller
  */
-export function boundAction(type, payload, meta) {
-    return dispatch => dispatch(createAction(type, payload, meta));
-}
+class Dispatcher {
+    /**
+     * Strategy for working with Store/Models
+     *
+     * @param {Function} getState - Return current application state
+     * @param {Function} dispatch - Send message to model/store layer
+     */
+    constructor({ getState = () => false, dispatch = f => f }) {
+        this.store = {
+            getState,
+            dispatch
+        };
+    }
+    /**
+     * Create pure redux/flux action
+     *
+     * @see https://github.com/acdlite/redux-actions
+     * @see https://github.com/acdlite/flux-standard-action#actions
+     *
+     * @param {String} type - Action type
+     * @param {*} [payload] - Some data or error details
+     * @param {*} [meta] - Addition action information
+     * @param {Boolean} [error] - Payload is error
+     *
+     * @returns {Object} New action object
+     */
+    createAction(type, payload, meta, error) {
+        return { type, payload, meta, error };
+    }
 
-/**
- * Bound action that has type Promise
- *
- * @param {Promise} operation - Function/Operation that return Promise
- * @param {String} type - Action type
- * @param {Function} isLoading - Getter for pending indicator
- * @param {Array<*>} [args] - Operation arguments
- *
- * @returns {Function} Binder
- * @param {Function} Binder.dispatch - Action emitter
- * @param {Function} Binder.getState - Getter for application global state
- */
-export function boundPromise(operation, type, isLoading, args=[]) {
-    return (dispatch, getState) => {
-        if (!isLoading(getState())) {
-            dispatch(createAction(`${type}${PENDING_POSTFIX}`, null, args));
+    /**
+     * Bound pure action
+     *
+     * @param {String} type - Action type
+     * @param {*} [payload] - Some data or error details
+     * @param {*} [meta] - Addition action information
+     *
+     * @returns {*} Dispatch action
+     */
+    boundAction(type, payload, meta) {
+        const { store, createAction } = this;
+        return store.dispatch(createAction(type, payload, meta));
+    }
 
+    /**
+     * Bound action that has type Promise
+     *
+     * @param {Function} operation - Function/Operation that return Promise
+     * @param {String} type - Action type
+     * @param {Function} isLoading - Getter for pending indicator
+     * @param {Array<*>} [args] - Operation arguments
+     *
+     * @returns {*} Dispatch action
+     */
+    boundPromise(operation, type, isLoading, args = []) {
+        const { store, createAction } = this;
+        if (!isLoading(store.getState())) {
+            store.dispatch(createAction(`${type}${PENDING_POSTFIX}`, null, args));
             operation(...args)
-                .then(response => dispatch(createAction(`${type}${SUCCESS_POSTFIX}`, response.data, args)))
-                .catch(error => dispatch(createAction(`${type}${FAIL_POSTFIX}`, error, args, true)));
+                .then(res => store.dispatch(createAction(`${type}${SUCCESS_POSTFIX}`, res.data, args)))
+                .catch(error => store.dispatch(createAction(`${type}${FAIL_POSTFIX}`, error, args, true)));
         }
     }
-}
 
-/**
- * Bound async action
- *
- * @param {Function} operation - Async function/operation that has first-error callback
- * @param {String} type - Action type
- * @param {Function} isLoading - Getter for pending indicator
- * @param {Array<*>} [args] - Operation arguments
- *
- * @returns {Function} Binder
- * @param {Function} Binder.dispatch - Action emitter
- * @param {Function} Binder.getState - Getter for application global state
- */
-export function boundAsync(operation, type, isLoading, args=[]) {
-    return (dispatch, getState) => {
-        if (!isLoading(getState())) {
-            dispatch(createAction(`${type}${PENDING_POSTFIX}`, null, args));
-
-            operation(...args, (error , data) => {
+    /**
+     * Bound async action
+     *
+     * @param {Function} operation - Async function/operation that has first-error callback
+     * @param {String} type - Action type
+     * @param {Function} isLoading - Getter for pending indicator
+     * @param {Array<*>} [args] - Operation arguments
+     *
+     * @returns {*} Dispatch action
+     */
+    boundAsync(operation, type, isLoading, args = []) {
+        const { store, createAction } = this;
+        if (!isLoading(store.getState())) {
+            store.dispatch(createAction(`${type}${PENDING_POSTFIX}`, null, args));
+            operation(...args, (error, data) => {
                 if (error) {
-                    return dispatch(createAction(`${type}${FAIL_POSTFIX}`, error, args, true));
+                    return store.dispatch(createAction(`${type}${FAIL_POSTFIX}`, error, args, true));
                 }
-                dispatch(createAction(`${type}${SUCCESS_POSTFIX}`, data, args));
+                store.dispatch(createAction(`${type}${SUCCESS_POSTFIX}`, data, args));
             });
         }
     }

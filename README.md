@@ -1,4 +1,4 @@
-## Action Creator Binder (Service/Helper for Redux Infrastructure)
+## Application dispatcher (Service/Helper for Redux Infrastructure)
 [![npm version](https://img.shields.io/npm/v/redux-acb.svg?style=flat-square)](https://www.npmjs.com/package/redux-acb)
 
 ### Image:
@@ -16,7 +16,11 @@ boundAsync
 
 ### Async Example:
 ```javascript
-import { boundPromise } from 'redux-acb';
+import { buildDispatcher } from 'redux-acb';
+import store from './store';
+
+const { boundPromise } = buildDispatcher(store);
+
 /**
  * Bound login action creators
  *
@@ -50,7 +54,10 @@ export function boundLogout() {
 
 ### Pure Example:
 ```javascript
-import { boundAction } from 'redux-acb';
+import { buildDispatcher } from 'redux-acb';
+import store from './store';
+
+const { boundAction } = buildDispatcher(store);
 /**
  * Bound project information modal toggle action creator
  *
