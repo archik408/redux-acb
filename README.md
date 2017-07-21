@@ -1,3 +1,7 @@
+!!! THIS APPROACH IS DEPRECATED: look at this [react-archux-example](https://github.com/archik408/react-archux-example),
+check [store](https://github.com/archik408/react-archux-example/blob/master/client/app/src/store/Store.js) and [unidirectional data flow](https://github.com/archik408/react-archux-example/blob/master/client/app/src/store/Dispatcher.js) implementation: 
+
+
 ## Application dispatcher (Service/Helper for Redux Infrastructure)
 [![npm version](https://img.shields.io/npm/v/redux-acb.svg?style=flat-square)](https://www.npmjs.com/package/redux-acb)
 

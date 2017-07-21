@@ -1,6 +1,6 @@
 {
   "name": "redux-acb",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Action Creator Binder (Service/Helper for Redux Infrastructure)",
   "main": "index.js",
   "scripts": {
